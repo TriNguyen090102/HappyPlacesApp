@@ -34,9 +34,8 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
-import org.greenrobot.eventbus.EventBus
 import java.lang.Exception
-
+private const val RESULT_OK = 0
 private const val SELECT_IMAGE_REQUEST_CODE = 1
 private const val REQUEST_IMAGE_CAPTURE = 2
 
@@ -114,6 +113,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     }
                     else -> {
                         addToTheDatabase()
+                        setResult(RESULT_OK)
                         finish()
                     }
                 }
@@ -123,16 +123,9 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun addToTheDatabase() {
         val databaseHandler = DatabaseHandler(this)
-        // Get the drawable from the ImageView
-        val drawable = binding?.ivPlaceImage?.drawable
 
-        // Create a Bitmap object from the drawable
-        val bitmap = Bitmap.createBitmap(
-            drawable!!.intrinsicWidth,
-            drawable.intrinsicHeight,
-            Bitmap.Config.ARGB_8888
-        )
-
+        binding?.ivPlaceImage?.isDrawingCacheEnabled = true
+        val bitmap = binding!!.ivPlaceImage.drawingCache
         val model = HappyPlaceModel(
             0,
             binding?.etTitle?.text.toString(),
@@ -143,6 +136,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             0.0,
             0.0
         )
+        binding?.ivPlaceImage?.isDrawingCacheEnabled = true
 
         try {
             val result = databaseHandler.insertHappyPlace(model)
