@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AddHappyPlaceActivity">
+    tools:context=".activities.AddHappyPlaceActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_add_place"
@@ -150,6 +150,8 @@
                 android:textColor="@color/colorAccent"
                 android:textSize="@dimen/add_screen_text_add_image_textSize"
                 android:textStyle="bold"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
                 app:layout_constraintBottom_toTopOf="@+id/btn_save"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.45"

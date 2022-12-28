@@ -1,21 +1,27 @@
-package com.happyplaces
+package com.happyplaces.activities
 
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.ActivityNotFoundException
+import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.happyplaces.database.DatabaseHandler
 import com.happyplaces.databinding.ActivityAddHappyPlaceBinding
+import com.happyplaces.models.HappyPlaceModel
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -28,6 +34,8 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import org.greenrobot.eventbus.EventBus
+import java.lang.Exception
 
 private const val SELECT_IMAGE_REQUEST_CODE = 1
 private const val REQUEST_IMAGE_CAPTURE = 2
@@ -43,8 +51,8 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         // This is used to align the xml view to this class
         setContentView(binding?.root)
 
-        // TODO (Step 2: Setting up the action bar using the toolbar and making enable the home back button and also adding the click of it.)
         // START
+
         setSupportActionBar(toolbar_add_place) // Use the toolbar to set the action bar.
         supportActionBar?.setDisplayHomeAsUpEnabled(true) // This is to use the home back button.
         // Setting the click event to the back button
@@ -53,6 +61,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         }
         binding?.etDate?.setOnClickListener(this)
         binding?.tvAddImage?.setOnClickListener(this)
+        binding?.btnSave?.setOnClickListener(this)
     }
 
     private fun setupDatePickerDialog() {
@@ -63,7 +72,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             selectedDate.set(Calendar.YEAR, year)
             selectedDate.set(Calendar.MONTH, monthOfYear)
             selectedDate.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
             binding?.etDate?.setText(dateFormat.format(selectedDate.time))
         }
 
@@ -84,14 +93,77 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             binding?.etDate -> {
                 setupDatePickerDialog()
             }
+
+            binding?.btnSave -> {
+                when {
+                    binding?.etTitle?.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "Title can not be empty", Toast.LENGTH_LONG).show()
+                    }
+
+                    binding?.etDescription?.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "Description can not be empty", Toast.LENGTH_LONG)
+                            .show()
+                    }
+
+                    binding?.etDate?.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "Date can not be empty", Toast.LENGTH_LONG).show()
+                    }
+
+                    binding?.etLocation?.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "Location can not be empty", Toast.LENGTH_LONG).show()
+                    }
+                    else -> {
+                        addToTheDatabase()
+                        finish()
+                    }
+                }
+            }
         }
+    }
+
+    private fun addToTheDatabase() {
+        val databaseHandler = DatabaseHandler(this)
+        // Get the drawable from the ImageView
+        val drawable = binding?.ivPlaceImage?.drawable
+
+        // Create a Bitmap object from the drawable
+        val bitmap = Bitmap.createBitmap(
+            drawable!!.intrinsicWidth,
+            drawable.intrinsicHeight,
+            Bitmap.Config.ARGB_8888
+        )
+
+        val model = HappyPlaceModel(
+            0,
+            binding?.etTitle?.text.toString(),
+            bitmap,
+            binding?.etDescription?.text.toString(),
+            binding?.etDate?.text.toString(),
+            binding?.etLocation?.text.toString(),
+            0.0,
+            0.0
+        )
+
+        try {
+            val result = databaseHandler.insertHappyPlace(model)
+
+            if (result > 0) {
+                Toast.makeText(this, "Save successful", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Something wrong! Please save again", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
     }
 
     private fun requestPermissions() {
         Dexter.withContext(this)
             .withPermissions(
                 Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.CAMERA
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
             )
             .withListener(object : MultiplePermissionsListener {
                 override fun onPermissionsChecked(report: MultiplePermissionsReport) {
@@ -104,7 +176,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     // Check for permanent denial of any permission
                     if (report.isAnyPermissionPermanentlyDenied) {
                         showExplainingDialog()
-
                     }
                 }
 
@@ -114,7 +185,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     // Show a dialog explaining the reasons for requesting the permissions
                     token.continuePermissionRequest()
                 }
-            }).check()
+            }).onSameThread().check()
     }
 
     private fun showExplainingDialog() {
@@ -143,15 +214,25 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         builder.setItems(arrayOf("Camera", "Gallery")) { dialog, which ->
             when (which) {
                 0 -> {
-                    // Take a photo with the camera
-                    val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                    startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+                    try {
+                        // Take a photo with the camera
+                        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
                 }
                 1 -> {
-                    // Select an image from the device's storage
-                    val intent =
-                        Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                    startActivityForResult(intent, SELECT_IMAGE_REQUEST_CODE)
+                    try {
+                        // Select an image from the device's storage
+                        val intent =
+                            Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                        startActivityForResult(intent, SELECT_IMAGE_REQUEST_CODE)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
                 }
             }
         }
@@ -165,6 +246,8 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                 REQUEST_IMAGE_CAPTURE -> {
                     // Get the photo taken with the camera
                     val bitmap = data?.extras?.get("data") as Bitmap
+                    //save the image to gallery
+                    saveImageToGallery(bitmap)
                     // Use the photo (e.g. display it in an ImageView)
                     binding?.ivPlaceImage?.setImageBitmap(bitmap)
                 }
@@ -177,4 +260,29 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
+
+    private fun saveImageToGallery(bitmap: Bitmap) {
+        try {
+            // Create a ContentValues object and set the desired values for the image
+            val values = ContentValues().apply {
+                put(MediaStore.Images.Media.TITLE, "")
+                put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
+            }
+
+            // Get a ContentResolver and insert the image into the MediaStore
+            val resolver = contentResolver
+            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+
+            // Open an OutputStream for the URI and write the Bitmap data to it
+            uri?.let {
+                resolver.openOutputStream(it)?.use { outputStream ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
 }
