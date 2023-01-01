@@ -3,6 +3,13 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlacesAppfix/app/src/main/res/drawable/ic_action_add_24dp.xml" value="0.1" />
+        <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlacesAppfix/app/src/main/res/drawable/ic_edit_white_24dp.xml" value="0.1" />
+        <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlacesAppfix/app/src/main/res/layout/activity_add_happy_place.xml" value="0.1" />
+        <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlacesAppfix/app/src/main/res/layout/activity_happy_place_detail.xml" value="0.165625" />
+        <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlacesAppfix/app/src/main/res/layout/activity_happy_place_details.xml" value="0.1875" />
+        <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlacesAppfix/app/src/main/res/layout/activity_main.xml" value="0.1875" />
+        <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlacesAppfix/app/src/main/res/layout/item_happy_place.xml" value="0.1875" />
         <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlaces_v2/app/src/main/res/layout/activity_add_happy_place.xml" value="0.1875" />
         <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlaces_v2/app/src/main/res/layout/activity_main.xml" value="0.1875" />
         <entry key="..\:/Users/ntr68/AndroidStudioProjects/HappyPlaces_v2/app/src/main/res/layout/item_happy_place.xml" value="0.176" />

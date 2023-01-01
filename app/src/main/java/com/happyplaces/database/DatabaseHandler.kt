@@ -2,6 +2,7 @@ package com.happyplaces.database
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.graphics.Bitmap
@@ -36,7 +37,7 @@ class DatabaseHandler(context: Context) : SQLiteOpenHelper(
             "CREATE TABLE $TABLE_HAPPY_PLACE (" +
                     "$KEY_ID INTEGER PRIMARY KEY," +
                     "$KEY_TITLE TEXT," +
-                    "$KEY_IMAGE BLOB," +
+                    "$KEY_IMAGE TEXT," +
                     "$KEY_DESCRIPTION TEXT," +
                     "$KEY_DATE TEXT," +
                     "$KEY_LOCATION TEXT," +
@@ -50,14 +51,30 @@ class DatabaseHandler(context: Context) : SQLiteOpenHelper(
         onCreate(db)
     }
 
-    fun insertHappyPlace(happyPlace: HappyPlaceModel): Long {
+    fun updateHappyPlace(happyPlace: HappyPlaceModel): Int {
         val db = writableDatabase
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        happyPlace.image.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
-        val byteArray = byteArrayOutputStream.toByteArray()
         val values = ContentValues().apply {
             put(KEY_TITLE, happyPlace.title)
-            put(KEY_IMAGE, byteArray)
+            put(KEY_IMAGE, happyPlace.image)
+            put(KEY_DESCRIPTION, happyPlace.description)
+            put(KEY_DATE, happyPlace.date)
+            put(KEY_LOCATION, happyPlace.location)
+            put(KEY_LATITUDE, happyPlace.latitude)
+            put(KEY_LONGTITUDE, happyPlace.longtitude)
+        }
+        Log.d("DEBUG", "Inserting values: $values")
+        val success = db.update(TABLE_HAPPY_PLACE,values , KEY_ID + "=" + happyPlace.id,null )
+        return success
+    }
+
+
+    fun insertHappyPlace(happyPlace: HappyPlaceModel): Long {
+        val db = writableDatabase
+
+
+        val values = ContentValues().apply {
+            put(KEY_TITLE, happyPlace.title)
+            put(KEY_IMAGE, happyPlace.image)
             put(KEY_DESCRIPTION, happyPlace.description)
             put(KEY_DATE, happyPlace.date)
             put(KEY_LOCATION, happyPlace.location)
@@ -77,13 +94,11 @@ class DatabaseHandler(context: Context) : SQLiteOpenHelper(
 
             while (cursor.moveToNext()) {
                 //convert byteArray to Bitmap
-                val byteArray = cursor.getBlob(cursor.getColumnIndex(KEY_IMAGE))
-                val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
 
                 val model = HappyPlaceModel(
                     cursor.getInt(cursor.getColumnIndex(KEY_ID)),
                     cursor.getString(cursor.getColumnIndex(KEY_TITLE)),
-                    bitmap,
+                    cursor.getString(cursor.getColumnIndex(KEY_IMAGE)),
                     cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION)),
                     cursor.getString(cursor.getColumnIndex(KEY_DATE)),
                     cursor.getString(cursor.getColumnIndex(KEY_LOCATION)),
